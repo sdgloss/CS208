@@ -1,1 +1,1 @@
-# CS208
+# CS208 Code Carleton College
