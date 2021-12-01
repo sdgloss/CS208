@@ -1,7 +1,12 @@
 /*
  * CS 208 Lab 4: Malloc Lab
  *
- * <Please put your name and userid here>
+ * struct team_t{
+    char *teamname = glosssdebenedettig; 
+    char *name1 = Sam Gloss;    
+    char *id1 = glosss;      
+    char *name2 = Grace de Benedetti;    
+    char *id2 = debenedettig;      }
  *
  * Simple allocator based on implicit free lists, first fit search,
  * and boundary tag coalescing.
@@ -28,6 +33,15 @@
  * eliminate edge conditions during coalescing.
  */
 
+ /*Write function header comments for new functions (and expand the existing header comments for
+the main existing functions mm_malloc, mm_free, find_fit, place, and coalesce) to describe
+what the function does, what policy it follows (if applicable), and what it assumes. Use inline
+comments to describe details as needed*/
+
+/*We couldn't figure out how to make the explicit free list work without segmentation faulting but so our list structure is just the basic one. Our free blocks are designed the same as our Allocated. Just in the headers and footers it states free/allocated then content body in the middle or amount of total free space. 
+Our allocator just does an implicit list and does first fit.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -44,10 +58,14 @@
 #define CHUNKSIZE  (1<<12)  /* initial heap size (bytes) */
 #define OVERHEAD    16      /* overhead of header and footer (bytes) */
 
+#define MIN_SIZE 32 /*minimum size of a block */
+
 /* NOTE: feel free to replace these macros with helper functions and/or
  * add new ones that will be useful for you. Just make sure you think
  * carefully about why these work the way they do
  */
+
+ 
 
 /* Pack a size and allocated bit into a word */
 #define PACK(size, alloc)  ((size) | (alloc))
@@ -90,11 +108,10 @@ static void place(void *bp, size_t asize);
 static size_t max(size_t x, size_t y);
 
 /*
- * mm_init -- <What does this function do?>
- * <What are the function's arguments?>
- * <What is the function's return value?>
- * <Are there any preconditions or postconditions?>
+ intializes new block. Gives it header and footer. Adds it into the heap if there isn't rooms. Extends the heap. 
  */
+
+
 int mm_init(void) {
     /* create the initial empty heap */
     if ((heap_start = mem_sbrk(4 * WSIZE)) == NULL)
@@ -115,10 +132,7 @@ int mm_init(void) {
 }
 
 /*
- * mm_malloc -- <What does this function do?>
- * <What are the function's arguments?>
- * <What is the function's return value?>
- * <Are there any preconditions or postconditions?>
+ Takes the size of the thing to malloc then adds it to the front of the heap. 
  */
 void *mm_malloc(size_t size) {
     size_t asize;      /* adjusted block size */
@@ -153,13 +167,60 @@ void *mm_malloc(size_t size) {
 }
 
 /*
- * mm_free -- <What does this function do?>
- * <What are the function's arguments?>
- * <What is the function's return value?>
- * <Are there any preconditions or postconditions?>
+ is given a BP at a location then sets the allocated block to free. 
  */
 void mm_free(void *bp) {
-    // TODO: implement this function
+    // sets the block to unallocated and coalesces the new free space with unallocated blocks around it
+		size_t size = GET_SIZE(HDRP(bp));
+
+		PUT(HDRP(bp), PACK(size, 0));
+		PUT(FTRP(bp), PACK(size, 0));
+		coalesce(bp);
+	}
+
+
+/*
+ * coalesce -- Boundary tag coalescing.
+ * Takes a pointer to a free block
+ * Return ptr to coalesced block
+ */
+
+ static void *coalesce(void *bp){
+   //only works if the previous and next block are not null. 
+   //if  blocks are next to eachother and free, they are joint into one bigger block. 
+		size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(bp)));
+		size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
+		size_t size = GET_SIZE(HDRP(bp));
+
+		if (prev_alloc && next_alloc) {			/* Case 1 */
+      //if both are allocated do nothing. 
+    	return bp;
+		}
+
+		else if (prev_alloc && !next_alloc) {		/* Case 2 */
+			//if only next is unallocated                
+      size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
+			PUT(HDRP(bp), PACK(size, 0));
+			PUT (FTRP(bp), PACK(size,0));
+		}
+
+		else if (!prev_alloc && next_alloc) {		/* Case 3 */
+			//only if previous is unallocated
+      size += GET_SIZE(HDRP(PREV_BLKP(bp)));
+			PUT(FTRP(bp), PACK(size, 0));
+			PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
+			bp = PREV_BLKP(bp);
+		}
+
+		else {						/* Case 4 */
+    //if both are unallocated
+			size += GET_SIZE(HDRP(PREV_BLKP(bp))) +
+			GET_SIZE(FTRP(NEXT_BLKP(bp)));
+			PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
+			PUT(FTRP(NEXT_BLKP(bp)), PACK(size, 0));
+			bp = PREV_BLKP(bp);
+		}
+		return bp;
 }
 
 /* The remaining routines are internal helper routines */
@@ -167,33 +228,24 @@ void mm_free(void *bp) {
 
 /*
  * place -- Place block of asize bytes at start of free block bp
- *          and <How are you handling splitting?>
  * Takes a pointer to a free block and the size of block to place inside it
  * Returns nothing
- * <Are there any preconditions or postconditions?>
  */
 static void place(void *bp, size_t asize) {
-    // TODO: improve this function
-
-    // REPLACE THIS
-    // currently does no splitting, just allocates the entire free block
-    PUT(HDRP(bp), PACK(GET_SIZE(HDRP(bp)), 1));
-    PUT(FTRP(bp), PACK(GET_SIZE(HDRP(bp)), 1));
-}
-
-/*
- * coalesce -- Boundary tag coalescing.
- * Takes a pointer to a free block
- * Return ptr to coalesced block
- * <Are there any preconditions or postconditions?>
- */
-static void *coalesce(void *bp) {
-    // TODO: improve this function
-
-    // REPLACE THIS
-    // currently does no coalescing
-    return bp;
-}
+    //is given a pointer and a location and then places the block at the given location. 
+		size_t csize = GET_SIZE(HDRP(bp));
+		if ((csize - asize) >= (2*DSIZE)) {
+			PUT(HDRP(bp), PACK(asize, 1));
+			PUT(FTRP(bp), PACK(asize, 1));
+			bp = NEXT_BLKP(bp);
+  		PUT(HDRP(bp), PACK(csize-asize, 0));
+			PUT(FTRP(bp), PACK(csize-asize, 0));
+		}
+		else {
+			PUT(HDRP(bp), PACK(csize, 1));
+			PUT(FTRP(bp), PACK(csize, 1));
+		}
+	}
 
 
 /*
