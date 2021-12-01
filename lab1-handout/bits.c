@@ -1,7 +1,7 @@
 /* 
  * CS 208 Lab 1: Data Lab
  * 
- * <Please put your name and userid here>
+ * Sam Gloss 2016591
  * 
  * bits.c - Source file with your solutions to the Lab.
  *          This is the file you will hand in to your instructor.
@@ -20,16 +20,16 @@
  * STEP 1: Read the following instructions carefully.
  */
 
-You will provide your solution to the Data Lab by
+/* You will provide your solution to the Data Lab by
 editing the collection of functions in this source file.
 
 INTEGER CODING RULES:
  
   Replace the "return" statement in each function with one
   or more lines of C code that implements the function. Your code 
-  must conform to the following style:
+  must conform to the following style: */
  
-  int Funct(arg1, arg2, ...) {
+int Funct(arg1, arg2, ...) {
       /* brief description of how your implementation works */
       int var1 = Expr1;
       ...
@@ -41,7 +41,7 @@ INTEGER CODING RULES:
       return ExprR;
   }
 
-  Each "Expr" is an expression using ONLY the following:
+/*  Each "Expr" is an expression using ONLY the following:
   1. Integer constants 0 through 255 (0xFF), inclusive. You are
       not allowed to use big constants such as 0xffffffff.
   2. Function arguments and local variables (no global variables).
@@ -70,10 +70,8 @@ INTEGER CODING RULES:
      is less than 0 or greater than 31.
 
 
-EXAMPLES OF ACCEPTABLE CODING STYLE:
-  /*
-   * pow2plus1 - returns 2^x + 1, where 0 <= x <= 31
-   */
+  EXAMPLES OF ACCEPTABLE CODING STYLE:
+   * pow2plus1 - returns 2^x + 1, where 0 <= x <= 31*/
   int pow2plus1(int x) {
      /* exploit ability of shifts to compute powers of 2 */
      return (1 << x) + 1;
@@ -88,7 +86,7 @@ EXAMPLES OF ACCEPTABLE CODING STYLE:
      result += 4;
      return result;
   }
-
+/*
 FLOATING POINT CODING RULES
 
 For the problems that require you to implement floating-point operations,
@@ -121,7 +119,7 @@ NOTES:
      header comment for each function. If there are any inconsistencies 
      between the maximum ops in the writeup and in this file, consider
      this file the authoritative source.
-
+*/
 /*
  * STEP 2: Modify the following functions according the coding rules.
  * 
@@ -170,6 +168,7 @@ NOTES:
    - 285 hentaigana
    - 3 additional Zanabazar Square characters */
 /* We do not support C11 <threads.h>.  */
+
 /*
  * sign - return 1 if positive, 0 if zero, and -1 if negative
  *  Examples: sign(130) = 1
@@ -178,8 +177,13 @@ NOTES:
  *  Max ops: 10
  *  Rating: 6
 */
-int sign(int x) {
-    return 2;
+int sign(int x) { 
+    int neg = (x >> 31); //finds out if it is negative 
+    int pos = (~x + 1)>> 31; //find out if it is positive
+    int hold = neg + (~pos + 1); //compares them. 
+
+    return hold; //7 total. 
+
 }
 /*
  * getByte - Extract byte n from int x
@@ -190,7 +194,11 @@ int sign(int x) {
  *   Rating: 5
  */
 int getByte(int x, int n) {
-  return 2;
+  unsigned int hold = x;
+  n = n << 3; //multiplies by 8
+  hold = hold >> (n); //then just shifts by that and removes using the mask. 
+  int mask = 0xff;
+  return (hold & mask); //3 operations. 
 }
 /*
  * bitXor - x^y using only ~ and &
@@ -203,7 +211,11 @@ int getByte(int x, int n) {
  *           and y both have 0s) and then inverting that
  */
 int bitXor(int x, int y) {
-  return 2;
+  //checks using and if they are the same then adds them together and flips.
+  int hold = ((~x) & y); 
+  int hold2 = ((~y) & x);
+  int hold3 = ~(~hold & ~hold2);
+  return hold3; //9 total. 
 }
 /*
  * bitAnd - x&y using only ~ and |
@@ -215,7 +227,11 @@ int bitXor(int x, int y) {
  *           (1s where x or y or both have 0s) and then invert that
  */
 int bitAnd(int x, int y) {
-  return 2;
+  //just adds the inverses and stuff then flips em. 
+  x = ~x; 
+  y = ~y;
+  int hold = ~(x|y); 
+  return hold; //4 total. 
 }
 /*
  * conditional - same as if (x) { return y; } else { return z; } or
@@ -229,7 +245,10 @@ int bitAnd(int x, int y) {
  *           y and z and return the combined result.
  */
 int conditional(int x, int y, int z) {
-  return 2;
+  int x_y = ((!(!x)) << 31) >> 31; //if x is false...turns into all 0s. else 1s. 
+  int x_z = ((!x) << 31) >> 31; //if x is false... turns into all 1s. else all 0s.
+  int holder = (y & x_y) | (z & x_z); 
+  return holder; //10 ops. 
 }
 /*
  * logicalNeg - implement the ! operator, using all of
@@ -241,7 +260,10 @@ int conditional(int x, int y, int z) {
  *   Advice: use x and -x to detect when x is 0
  */
 int logicalNeg(int x) {
-  return 2;
+  int hold1 = x >> 31; //gets the sign of x
+  int hold2 = (~x + 1) >> 31; //gets the sign of -x
+  int holder = (hold1 | hold2) + 1; //gets sign of x + -x + 1. aka should be 0 unless x is 0 inwhich case itll be 1. 
+  return holder; //6 ops. 
 }
 /*
  * isLessOrEqual - if x <= y  then return 1, else return 0
@@ -254,7 +276,22 @@ int logicalNeg(int x) {
  *           and combine the results
  */
 int isLessOrEqual(int x, int y) {
-  return 2;
+  int sub = y + (~x + 1); //subtracting y from x. easier than the advice because if it isn't negative then the zero case is included. 
+  sub = (sub >> 31) & 0x1; //finds out if sign is negative, if it is converts to one. 
+  sub = !sub;
+  
+  //deals with overflow
+  int sine = 1 << 31; //creating -1 for checking
+  x = sine & x; //isolating the sine. 
+  int logicalX = x>>31; //becomes 0 or -1
+  y = sine & y;
+  int dif_sine = x^y; //sees if their sine is different
+  dif_sine = (dif_sine >> 31) & 0x1; //if it is then becomes 1, otherwise 0.
+ 
+  int hold = ((!dif_sine) & sub) | (logicalX & dif_sine) ; 
+  //part one is for checking that the numbers have the same sign & then gives result of subraction as long as the signs are good. part two just makes sure that x has the same sine as dif sine if either are true then overflow is taken care of. 
+  return hold; //17 total.
+
 }
 /* 
  * absVal - absolute value of x
@@ -267,7 +304,9 @@ int isLessOrEqual(int x, int y) {
  *           (^ may prove useful.)
  */
 int absVal(int x) {
-  return 2;
+  int neg = (x >> 31); //finds out if it is negative
+  int hold = (neg + x)^neg; //finds out which bits changed from 1 to 0 and therefore those are the right values. then the values not at 1 gets flipped which is the absolute value. 
+  return hold; //3 total operations. 
 }
 /*
  * isPower2 - returns 1 if x is a power of 2, and 0 otherwise
@@ -281,5 +320,14 @@ int absVal(int x) {
  *           have 1s in any of the same places.
  */
 int isPower2(int x) {
-  return 2;
+  
+  int neg = (x >> 31); //finds out if it is negative 
+  int pos = (~x + 1)>> 31; //find out if it is positive
+  int hold = neg + (~pos + 1); //compares them. 
+  hold = (neg + hold)^neg; //tell us whether the value of x is 0 or not. 
+  int holder = hold & !neg; //should be zero if is it either negative or 0.  
+  int altered_x = x + (~1 + 1); 
+  altered_x = !(altered_x & x); //tests to see if X and Altered X are the same. If they are, we get 1, if not, we get 0. 
+  holder = holder & altered_x; //compare altered X and holder. 
+  return holder; //17 total. 
 }
